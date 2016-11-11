@@ -5,7 +5,7 @@
 #define NUM_CLOCK_TICKS 11
 
 static const struct GPathInfo ANALOG_BG_POINTS[] = {
-	{ 
+	{
 		5, (GPoint []) {
 			{66, -2},
 			{71, -2},
@@ -14,7 +14,7 @@ static const struct GPathInfo ANALOG_BG_POINTS[] = {
 			{66, 1}
 		}
 	},
-	{ 
+	{
 		5, (GPoint []) {
 			{77, -2},
 			{72, -2},
@@ -29,9 +29,9 @@ static const GPathInfo MINUTE_HAND_POINTS = {
 	5, (GPoint []) {
 		{ -6, -10 },
 		{ 6, -10 },
-		{ 4, -75 },
+		{ 4, -76 },
 		{ 0, -80 },
-		{ -4, -75 },
+		{ -4, -76 },
 	}
 };
 
@@ -39,21 +39,20 @@ static const GPathInfo HOUR_HAND_POINTS = {
 	5, (GPoint []){
 		{ -5, -10 },
 		{ 5, -10 },
-		{ 4, -45 },
+		{ 4, -46 },
 		{ 0, -50 },
-		{ -4, -45 },
+		{ -4, -46 },
 	}
 };
 
 static const GPathInfo GMT_HAND_POINTS = {
 	7, (GPoint []) {
-		{ 0, -72 },
-		{ 9, -72 },
-		{ 3, -78 },
-		{ 3, -85 },
-		{ -3, -85 },
-		{ -3, -78 },
-		{ -9, -72 },
+		{ 0, -70 },
+		{ 8, -70 },
+		{ 2, -76 },
+		{ 2, -85 },
+		{ -2, -85 },
+		{ -2, -76 },
+		{ -8, -70 },
 	}
 };
-
