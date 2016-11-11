@@ -47,13 +47,13 @@ static const GPathInfo HOUR_HAND_POINTS = {
 
 static const GPathInfo GMT_HAND_POINTS = {
 	7, (GPoint []) {
-		{ 0, -70 },
-		{ 9, -70 },
-		{ 3, -76 },
+		{ 0, -72 },
+		{ 9, -72 },
+		{ 3, -78 },
 		{ 3, -85 },
 		{ -3, -85 },
-		{ -3, -76 },
-		{ -9, -70 },
+		{ -3, -78 },
+		{ -9, -72 },
 	}
 };
 

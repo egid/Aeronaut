@@ -3,18 +3,21 @@
 #include "pebble.h"
 
 static Window *s_window;
-static Layer *s_simple_bg_layer, *s_date_layer, *s_hands_layer;
+static Layer *bg_layer, *s_date_layer, *s_hands_layer;
 static TextLayer *s_num_label;
 
 static GPath *s_tick_paths[NUM_CLOCK_TICKS];
 static GPath *s_minute_arrow, *s_hour_arrow, *s_gmt_arrow;
 static char s_num_buffer[4];
 
-bool UseSeconds = false;
 
-static int32_t get_angle_for_hour(int hour) {
-  // Progress through 12 hours, out of 360 degrees
-  return (hour * 360) / 12;
+bool use_seconds = true;
+bool hour_ticks = true;
+bool utc_ticks = false;
+bool minute_ticks = true;
+
+static int32_t get_angle(int value, int total) {
+	return (value * 360) / total;
 }
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
@@ -30,24 +33,41 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 		gpath_draw_filled(ctx, s_tick_paths[i]);
 	}
 	
+	// minute ticks
 	// create all but 1200
-	for (int i = 1; i < 12; i++) {
-		int hour_angle = get_angle_for_hour(i);
-		GRect frame = grect_inset(bounds, GEdgeInsets(5));
-		GPoint pos = gpoint_from_polar(frame, GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE(hour_angle));
+	if (minute_ticks) {
+		for (int i = 1; i < 60; i++) {
+			GRect frame = grect_inset(bounds, GEdgeInsets(4));
+			GPoint pos = gpoint_from_polar(frame, GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE( get_angle(i, 60) ));
 
-		graphics_context_set_fill_color(ctx, GColorWhite);
-		graphics_fill_circle(ctx, pos, 2);
-	}
-	for (int i = 0; i < 12; i++) {
-		int hour_angle = get_angle_for_hour(i);
-		GRect frame = grect_inset(bounds, GEdgeInsets(4));
-		GPoint pos = gpoint_from_polar(frame, GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE(hour_angle + 15));
-
-		graphics_context_set_fill_color(ctx, GColorLightGray);
-		graphics_fill_circle(ctx, pos, 1);
+			graphics_context_set_fill_color(ctx, GColorDarkGray);
+			graphics_fill_circle(ctx, pos, 1);
+		}
 	}
 
+	// 24h ticks
+	// create all but 1200
+	if (utc_ticks) {
+		for (int i = 1; i < 24; i++) {
+			GRect frame = grect_inset(bounds, GEdgeInsets(3));
+			GPoint pos = gpoint_from_polar(frame, GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE( get_angle(i, 24) ));
+
+			graphics_context_set_fill_color(ctx, GColorDarkGray);
+			graphics_fill_circle(ctx, pos, 1);
+		}	
+	}
+
+	// 12h ticks
+	// create all but 1200
+	if (hour_ticks) {
+		for (int i = 1; i < 12; i++) {
+			GRect frame = grect_inset(bounds, GEdgeInsets(4));
+			GPoint pos = gpoint_from_polar(frame, GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE( get_angle (i, 12) ));
+
+			graphics_context_set_fill_color(ctx, GColorWhite);
+			graphics_fill_circle(ctx, pos, 2);
+		}
+	}
 }
 
 static void hands_update_proc(Layer *layer, GContext *ctx) {
@@ -100,9 +120,11 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	gpath_draw_outline(ctx, s_minute_arrow);
 
 	// second hand
-	if (UseSeconds == true) {	
+	if (use_seconds == true) {
+// 		graphics_context_set_stroke_width(ctx, 1);
 		graphics_context_set_stroke_color(ctx, GColorRed);
-		graphics_draw_line(ctx, second_hand_point, center);
+		graphics_draw_line(ctx, second_hand, second_hand_point);//, center);
+// 		graphics_context_set_stroke_width(ctx, 2);
 		graphics_context_set_stroke_color(ctx, GColorBlack);
 		graphics_draw_line(ctx, second_hand, center);
 	}
@@ -124,9 +146,9 @@ static void window_load(Window *window) {
 	Layer *window_layer = window_get_root_layer(window);
 	GRect bounds = layer_get_bounds(window_layer);
 
-	s_simple_bg_layer = layer_create(bounds);
-	layer_set_update_proc(s_simple_bg_layer, bg_update_proc);
-	layer_add_child(window_layer, s_simple_bg_layer);
+	bg_layer = layer_create(bounds);
+	layer_set_update_proc(bg_layer, bg_update_proc);
+	layer_add_child(window_layer, bg_layer);
 
 	s_date_layer = layer_create(bounds);
 	layer_set_update_proc(s_date_layer, date_update_proc);
@@ -148,7 +170,7 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
-	layer_destroy(s_simple_bg_layer);
+	layer_destroy(bg_layer);
 	layer_destroy(s_date_layer);
 
 	text_layer_destroy(s_num_label);
@@ -182,7 +204,7 @@ static void init() {
 		s_tick_paths[i] = gpath_create(&ANALOG_BG_POINTS[i]);
 	}
 
-	if (UseSeconds == false) {
+	if (use_seconds == false) {
 		tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
 	} else {
 		tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
@@ -193,11 +215,7 @@ static void deinit() {
 	gpath_destroy(s_minute_arrow);
 	gpath_destroy(s_hour_arrow);
 	gpath_destroy(s_gmt_arrow);
-
-	for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
-		gpath_destroy(s_tick_paths[i]);
-	}
-
+	
 	tick_timer_service_unsubscribe();
 	window_destroy(s_window);
 }
