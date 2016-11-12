@@ -102,30 +102,15 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	gpath_rotate_to(s_gmt_arrow, gmt_angle);
 	gpath_draw_filled(ctx, s_gmt_arrow);
 
-	//   graphics_context_set_stroke_color(ctx, GColorWhite);
 
-
-	// graphics_context_set_stroke_width(ctx, 2);
 	// hour hand
 	graphics_context_set_fill_color(ctx, GColorWhite);
-	// graphics_context_set_stroke_color(ctx, GColorLightGray);
-	//
-	// gpath_rotate_to(s_hour_arrow, hour_angle);
-	// gpath_draw_filled(ctx, s_hour_arrow);
-	// gpath_draw_outline(ctx, s_hour_arrow);
 
 	graphics_context_set_stroke_width(ctx, 6);
 	graphics_draw_line(ctx, hour_hand, center);
 
 
 	// minute hand
-	// graphics_context_set_fill_color(ctx, GColorWhite );
-	// graphics_context_set_stroke_color(ctx, GColorLightGray);
-	//
-	// gpath_rotate_to(s_minute_arrow, TRIG_MAX_ANGLE * t->tm_min / 60);
-	// gpath_draw_filled(ctx, s_minute_arrow);
-	// gpath_draw_outline(ctx, s_minute_arrow);
-
 	graphics_context_set_stroke_width(ctx, 6);
 	graphics_draw_line(ctx, minute_hand, center);
 
@@ -200,15 +185,11 @@ static void init() {
 	s_num_buffer[0] = '\0';
 
 	// init hand paths
-	s_minute_arrow = gpath_create(&MINUTE_HAND_POINTS);
-	s_hour_arrow = gpath_create(&HOUR_HAND_POINTS);
 	s_gmt_arrow = gpath_create(&GMT_HAND_POINTS);
 
 	Layer *window_layer = window_get_root_layer(s_window);
 	GRect bounds = layer_get_bounds(window_layer);
 	GPoint center = grect_center_point(&bounds);
-	gpath_move_to(s_minute_arrow, center);
-	gpath_move_to(s_hour_arrow, center);
 	gpath_move_to(s_gmt_arrow, center);
 
 	for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
@@ -223,8 +204,6 @@ static void init() {
 }
 
 static void deinit() {
-	gpath_destroy(s_minute_arrow);
-	gpath_destroy(s_hour_arrow);
 	gpath_destroy(s_gmt_arrow);
 
 	tick_timer_service_unsubscribe();
