@@ -60,12 +60,19 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 	}
 }
 
+static GPoint radial_gpoint(GPoint center, int16_t length_from_center, int32_t angle) {
+	return (GPoint) {
+		.x = (int16_t)(sin_lookup(angle) * (int32_t)length_from_center / TRIG_MAX_RATIO) + center.x,
+		.y = (int16_t)(-cos_lookup(angle) * (int32_t)length_from_center / TRIG_MAX_RATIO) + center.y,
+	};
+}
+
 static void hands_update_proc(Layer *layer, GContext *ctx) {
 	GRect bounds = layer_get_bounds(layer);
 	GPoint center = grect_center_point(&bounds);
 
 	const int16_t second_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 8, bounds.size.w / 2);
-	const int16_t minute_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 15, bounds.size.w / 2);
+	const int16_t minute_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 20, bounds.size.w / 2);
 	const int16_t hour_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 45, bounds.size.w / 2);
 
 	time_t now = time(NULL);
@@ -76,22 +83,10 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	int32_t minute_angle = TRIG_MAX_ANGLE * t->tm_min / 60;
 	int32_t hour_angle = (TRIG_MAX_ANGLE * (((t->tm_hour % 12) * 6) + (t->tm_min / 10))) / (12 * 6);
 
-	GPoint second_hand_point = {
-		.x = (int16_t)(sin_lookup(second_angle) * (int32_t)second_hand_length / TRIG_MAX_RATIO) + center.x,
-		.y = (int16_t)(-cos_lookup(second_angle) * (int32_t)second_hand_length / TRIG_MAX_RATIO) + center.y,
-	};
-	GPoint second_hand = {
-		.x = (int16_t)(sin_lookup(second_angle) * ((int32_t)second_hand_length - 15) / TRIG_MAX_RATIO) + center.x,
-		.y = (int16_t)(-cos_lookup(second_angle) * ((int32_t)second_hand_length - 15) / TRIG_MAX_RATIO) + center.y,
-	};
-	GPoint minute_hand = {
-		.x = (int16_t)(sin_lookup(minute_angle) * (int32_t)minute_hand_length / TRIG_MAX_RATIO) + center.x,
-		.y = (int16_t)(-cos_lookup(minute_angle) * (int32_t)minute_hand_length / TRIG_MAX_RATIO) + center.y,
-	};
-	GPoint hour_hand = {
-		.x = (int16_t)(sin_lookup(hour_angle) * (int32_t)hour_hand_length / TRIG_MAX_RATIO) + center.x,
-		.y = (int16_t)(-cos_lookup(hour_angle) * (int32_t)hour_hand_length / TRIG_MAX_RATIO) + center.y,
-	};
+	GPoint second_hand_point = radial_gpoint(center, second_hand_length, second_angle);
+	GPoint second_hand = radial_gpoint(center, second_hand_length - 15, second_angle);
+	GPoint minute_hand = radial_gpoint(center, minute_hand_length, minute_angle);
+	GPoint hour_hand = radial_gpoint(center, hour_hand_length, hour_angle);
 
 
 	// gmt hand
@@ -111,6 +106,12 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 
 	// minute hand
+	graphics_context_set_stroke_width(ctx, 2);
+	graphics_context_set_stroke_color(ctx, GColorBlack);
+	graphics_draw_circle(ctx, center, 5);
+	graphics_fill_circle(ctx, center, 5);
+
+	graphics_context_set_stroke_color(ctx, GColorWhite);
 	graphics_context_set_stroke_width(ctx, 6);
 	graphics_draw_line(ctx, minute_hand, center);
 
@@ -120,9 +121,6 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 		graphics_context_set_stroke_width(ctx, 1);
 		graphics_context_set_stroke_color(ctx, GColorRed);
 		graphics_draw_line(ctx, second_hand, second_hand_point);
-
-		// graphics_context_set_stroke_color(ctx, GColorBlack);
-		// graphics_draw_line(ctx, second_hand, center);
 	}
 }
 
