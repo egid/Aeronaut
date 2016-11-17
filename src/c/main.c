@@ -1,29 +1,59 @@
 #include "main.h"
 
-#include "pebble.h"
+#include <pebble.h>
+#include <pebble-fctx/fctx.h>
 
 static Window *s_window;
 static Layer *bg_layer, *s_date_layer, *s_hands_layer;
 static TextLayer *s_num_label;
 
 static GPath *s_tick_paths[NUM_CLOCK_TICKS];
-static GPath *s_minute_arrow, *s_hour_arrow, *s_gmt_arrow;
+static GPath *s_gmt_arrow;
 static char s_num_buffer[4];
 
+enum Palette {
+	BEZEL_COLOR,
+	FACE_COLOR,
+	MINUTE_TEXT_COLOR,
+	MINUTE_HAND_COLOR,
+	GMT_HAND_COLOR,
+	HOUR_TEXT_COLOR,
+	PALETTE_SIZE
+};
 
-bool use_seconds = true;
+GColor g_palette[PALETTE_SIZE];
+
+bool use_seconds = false;
 bool hour_ticks = true;
 bool minute_ticks = true;
+
+
+// --------------------------------------------------------------------------
+// Utility functions.
+// --------------------------------------------------------------------------
+
+static inline FPoint clockToCartesian(FPoint center, fixed_t radius, int32_t angle) {
+	FPoint pt;
+	int32_t c = cos_lookup(angle);
+	int32_t s = sin_lookup(angle);
+	pt.x = center.x + s * radius / TRIG_MAX_RATIO;
+	pt.y = center.y - c * radius / TRIG_MAX_RATIO;
+	return pt;
+}
 
 static int32_t get_angle(int value, int total) {
 	return (value * 360) / total;
 }
 
+
+// --------------------------------------------------------------------------
+// Main functions.
+// --------------------------------------------------------------------------
+
 static void bg_update_proc(Layer *layer, GContext *ctx) {
 	GRect bounds = layer_get_bounds(layer);
+	FPoint center = FPointI(bounds.size.w / 2, bounds.size.h / 2);
 
-	graphics_context_set_fill_color(ctx, GColorBlack);
-	graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
 	graphics_context_set_fill_color(ctx, GColorWhite);
 	for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
 		const int x_offset = PBL_IF_ROUND_ELSE(18, 0);
@@ -92,13 +122,30 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	// gmt hand
 	int32_t gmt_angle = (TRIG_MAX_ANGLE * (((gmt->tm_hour) * 6) + (gmt->tm_min / 10))) / (24 * 6);
 
-	graphics_context_set_stroke_color(ctx, GColorWhite);
-	graphics_context_set_fill_color(ctx, GColorChromeYellow );
-	gpath_rotate_to(s_gmt_arrow, gmt_angle);
-	gpath_draw_filled(ctx, s_gmt_arrow);
+	FPoint fcenter = FPointI(bounds.size.w / 2, bounds.size.h / 2);
+	fixed_t gmt_scale = 16;
+
+	FContext fctx;
+	fctx_init_context(&fctx, ctx);
+	fctx_set_fill_color(&fctx, g_palette[GMT_HAND_COLOR]);
+	fctx_set_offset(&fctx, fcenter);
+	fctx_set_scale(&fctx, FPointOne, FPointOne);
+	fctx_set_rotation(&fctx, gmt_angle);
+
+	fctx_begin_fill(&fctx);
+	fctx_move_to (&fctx, FPoint(6*gmt_scale, -70*gmt_scale));
+	fctx_line_to (&fctx, FPoint(1*gmt_scale, -77*gmt_scale));
+	fctx_line_to (&fctx, FPoint(1*gmt_scale, -85*gmt_scale));
+	fctx_line_to (&fctx, FPoint(-1*gmt_scale, -85*gmt_scale));
+	fctx_line_to (&fctx, FPoint(-1*gmt_scale, -77*gmt_scale));
+	fctx_line_to (&fctx, FPoint(-6*gmt_scale, -70*gmt_scale));
+	fctx_line_to (&fctx, FPoint(6*gmt_scale, -70*gmt_scale));
+	fctx_end_fill(&fctx);
+	fctx_deinit_context(&fctx);
 
 
 	// hour hand
+	graphics_context_set_stroke_color(ctx, GColorWhite);
 	graphics_context_set_fill_color(ctx, GColorWhite);
 
 	graphics_context_set_stroke_width(ctx, 6);
@@ -173,7 +220,15 @@ static void window_unload(Window *window) {
 }
 
 static void init() {
+	g_palette[      BEZEL_COLOR] = GColorWhite;
+	g_palette[       FACE_COLOR] = GColorBlack;
+	g_palette[MINUTE_TEXT_COLOR] = GColorWhite;
+	g_palette[MINUTE_HAND_COLOR] = GColorWhite;
+	g_palette[   GMT_HAND_COLOR] = GColorChromeYellow;
+	g_palette[  HOUR_TEXT_COLOR] = PBL_IF_COLOR_ELSE(GColorBlack, GColorBlack);
+
 	s_window = window_create();
+	window_set_background_color(s_window, g_palette[FACE_COLOR]);
 	window_set_window_handlers(s_window, (WindowHandlers) {
 		.load = window_load,
 		.unload = window_unload,
