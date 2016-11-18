@@ -115,17 +115,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	GRect bounds = layer_get_bounds(layer);
 	GPoint center = grect_center_point(&bounds);
 
-	// init fctx
-	FContext fctx;
-	fctx_init_context(&fctx, ctx);
-	FPoint f_center = FPointI(bounds.size.w / 2, bounds.size.h / 2);
-	fixed_t f_scale = 16;
-
-
-	const int16_t second_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 8, bounds.size.w / 2);
-	const int16_t minute_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 20, bounds.size.w / 2);
-	const int16_t hour_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 45, bounds.size.w / 2);
-
+	// time stuff
 	time_t now = time(NULL);
 	struct tm *t = localtime(&now);
 	struct tm *gmt = gmtime(&now);
@@ -136,9 +126,11 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	int32_t minute_angle = TRIG_MAX_ANGLE * t->tm_min / 60;
 	int32_t hour_angle = (TRIG_MAX_ANGLE * (((t->tm_hour % 12) * 6) + (t->tm_min / 10))) / (12 * 6);
 
-	GPoint second_hand_point = radial_gpoint(center, second_hand_length, second_angle);
-	GPoint second_hand = radial_gpoint(center, second_hand_length - 15, second_angle);
-	GPoint minute_hand = radial_gpoint(center, minute_hand_length, minute_angle);
+	// init fctx
+	FContext fctx;
+	fctx_init_context(&fctx, ctx);
+	FPoint f_center = FPointI(bounds.size.w / 2, bounds.size.h / 2);
+	fixed_t f_scale = 16;
 
 
 	////////////////////////////////////////////////////////////////////////////
@@ -201,15 +193,25 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	fctx_line_to (&fctx, FPointI( 3, -10));
 	fctx_end_fill(&fctx);
 
+	fctx_set_fill_color(&fctx, GColorDarkGray);
+	fctx_begin_fill(&fctx);
+	fctx_plot_circle(&fctx, &f_center, 6*16);
+	fctx_end_fill(&fctx);
 
 	////////////////////////////////////////////////////////////////////////////
 	// second hand
 	////////////////////////////////////////////////////////////////////////////
 
 	if (use_seconds == true) {
+		const int16_t second_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 8, bounds.size.w / 2);
+		GPoint second_hand = radial_gpoint(center, second_hand_length - 15, second_angle);
+		GPoint second_hand_point = radial_gpoint(center, second_hand_length, second_angle);
+
 		graphics_context_set_stroke_width(ctx, 1);
 		graphics_context_set_stroke_color(ctx, GColorRed);
 		graphics_draw_line(ctx, second_hand, second_hand_point);
+		graphics_context_set_stroke_color(ctx, GColorDarkGray);
+		graphics_draw_line(ctx, second_hand, center);
 	}
 
 	// deinit fctx
