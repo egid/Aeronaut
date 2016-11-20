@@ -1,7 +1,7 @@
 #include "main.h"
 
 #include <pebble.h>
-#include <pebble-fctx/fctx.h>
+// #include <pebble-fctx/fctx.h>
 
 static Window *s_window;
 static Layer *bg_layer, *s_date_layer, *s_hands_layer;
@@ -36,18 +36,18 @@ bool minute_ticks = true;
 #define FIXED_TO_INT(a) ((a) / FIXED_POINT_SCALE)
 #define FIXED_MULTIPLY(a, b) (((a) * (b)) / FIXED_POINT_SCALE)
 
-#define FPoint(x, y) ((FPoint){(x), (y)})
-#define FPointI(x, y) ((FPoint){INT_TO_FIXED(x), INT_TO_FIXED(y)})
+// #define FPoint(x, y) ((FPoint){(x), (y)})
+// #define FPointI(x, y) ((FPoint){INT_TO_FIXED(x), INT_TO_FIXED(y)})
 
 
-static inline FPoint clockToCartesian(FPoint center, fixed_t radius, int32_t angle) {
-	FPoint pt;
-	int32_t c = cos_lookup(angle);
-	int32_t s = sin_lookup(angle);
-	pt.x = center.x + s * radius / TRIG_MAX_RATIO;
-	pt.y = center.y - c * radius / TRIG_MAX_RATIO;
-	return pt;
-}
+// static inline FPoint clockToCartesian(FPoint center, fixed_t radius, int32_t angle) {
+// 	FPoint pt;
+// 	int32_t c = cos_lookup(angle);
+// 	int32_t s = sin_lookup(angle);
+// 	pt.x = center.x + s * radius / TRIG_MAX_RATIO;
+// 	pt.y = center.y - c * radius / TRIG_MAX_RATIO;
+// 	return pt;
+// }
 
 static int32_t get_angle(int value, int total) {
 	return (value * 360) / total;
@@ -60,7 +60,8 @@ static int32_t get_angle(int value, int total) {
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
 	GRect bounds = layer_get_bounds(layer);
-	FPoint center = FPointI(bounds.size.w / 2, bounds.size.h / 2);
+	// FPoint center = FPointI(bounds.size.w / 2, bounds.size.h / 2);
+	GPoint center = grect_center_point(&bounds);
 
 	// minute ticks
 	// create all but 1200
@@ -70,7 +71,7 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 		graphics_context_set_stroke_color(ctx, GColorDarkGray);
 		for (int i = 1; i < 60; i++) {
 			GRect frame = grect_inset(bounds, GEdgeInsets(3));
-			GRect frame2 = grect_inset(bounds, GEdgeInsets(5));
+			GRect frame2 = grect_inset(bounds, GEdgeInsets(6));
 			GPoint pos = gpoint_from_polar(frame, GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE( get_angle(i, 60) ));
 			GPoint pos2 = gpoint_from_polar(frame2, GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE( get_angle(i, 60) ));
 
@@ -95,7 +96,7 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 
 		for (int i = 1; i < 12; i++) {
 			GRect frame = grect_inset(bounds, GEdgeInsets(3));
-			GRect frame2 = grect_inset(bounds, GEdgeInsets(6));
+			GRect frame2 = grect_inset(bounds, GEdgeInsets(7));
 			GPoint pos = gpoint_from_polar(frame, GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE( get_angle(i, 12) ));
 			GPoint pos2 = gpoint_from_polar(frame2, GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE( get_angle(i, 12) ));
 
@@ -126,77 +127,101 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	int32_t minute_angle = TRIG_MAX_ANGLE * t->tm_min / 60;
 	int32_t hour_angle = (TRIG_MAX_ANGLE * (((t->tm_hour % 12) * 6) + (t->tm_min / 10))) / (12 * 6);
 
+	// lengths
+	int16_t minute_length = 75;
+	int16_t hour_length = 50;
+
+	// ends
+	GPoint minute_hand_point = radial_gpoint(center, minute_length, minute_angle);
+	GPoint hour_hand_point = radial_gpoint(center, hour_length, hour_angle);
+
 	// init fctx
-	FContext fctx;
-	fctx_init_context(&fctx, ctx);
-	FPoint f_center = FPointI(bounds.size.w / 2, bounds.size.h / 2);
-	fixed_t f_scale = 16;
+	// FContext fctx;
+	// fctx_init_context(&fctx, ctx);
+	// FPoint f_center = FPointI(bounds.size.w / 2, bounds.size.h / 2);
+	// fixed_t f_scale = 16;
 
 
 	////////////////////////////////////////////////////////////////////////////
 	// GMT pointer
 	////////////////////////////////////////////////////////////////////////////
 
-	fctx_set_fill_color(&fctx, g_palette[GMT_HAND_COLOR]);
-	fctx_set_offset(&fctx, f_center);
-	fctx_set_scale(&fctx, FPointOne, FPointOne);
-	fctx_set_rotation(&fctx, gmt_angle);
+	graphics_context_set_fill_color(ctx, GColorChromeYellow );
+	gpath_rotate_to(s_gmt_arrow, gmt_angle);
+	gpath_draw_filled(ctx, s_gmt_arrow);
 
-	fctx_begin_fill(&fctx);
-	fctx_move_to (&fctx, FPointI( 6, -70));
-	fctx_line_to (&fctx, FPointI( 1, -77));
-	fctx_line_to (&fctx, FPointI( 1, -85));
-	fctx_line_to (&fctx, FPointI(-1, -85));
-	fctx_line_to (&fctx, FPointI(-1, -77));
-	fctx_line_to (&fctx, FPointI(-6, -70));
-	fctx_line_to (&fctx, FPointI( 6, -70));
-	fctx_end_fill(&fctx);
+
+	// fctx_set_fill_color(&fctx, g_palette[GMT_HAND_COLOR]);
+	// fctx_set_offset(&fctx, f_center);
+	// fctx_set_scale(&fctx, FPointOne, FPointOne);
+	// fctx_set_rotation(&fctx, gmt_angle);
+	//
+	// fctx_begin_fill(&fctx);
+	// fctx_move_to (&fctx, FPointI( 6, -70));
+	// fctx_line_to (&fctx, FPointI( 1, -77));
+	// fctx_line_to (&fctx, FPointI( 1, -85));
+	// fctx_line_to (&fctx, FPointI(-1, -85));
+	// fctx_line_to (&fctx, FPointI(-1, -77));
+	// fctx_line_to (&fctx, FPointI(-6, -70));
+	// fctx_line_to (&fctx, FPointI( 6, -70));
+	// fctx_end_fill(&fctx);
 
 
 	////////////////////////////////////////////////////////////////////////////
 	// hour hand
 	////////////////////////////////////////////////////////////////////////////
 
-	fctx_set_fill_color(&fctx, g_palette[HAND_COLOR]);
-	fctx_set_offset(&fctx, f_center);
-	fctx_set_scale(&fctx, FPointOne, FPointOne);
-	fctx_set_rotation(&fctx, hour_angle);
+	graphics_context_set_stroke_width(ctx, 6);
+	graphics_context_set_stroke_color(ctx, g_palette[HAND_COLOR]);
+	graphics_draw_line(ctx, center, hour_hand_point);
 
-	fctx_begin_fill(&fctx);
-	fctx_move_to (&fctx, FPointI( 3, -10));
-	fctx_line_to (&fctx, FPointI( 5, -12));
-	fctx_line_to (&fctx, FPointI( 3, -45));
-	fctx_line_to (&fctx, FPointI( 0, -50));
-	fctx_line_to (&fctx, FPointI(-3, -45));
-	fctx_line_to (&fctx, FPointI(-5, -12));
-	fctx_line_to (&fctx, FPointI(-3, -10));
-	fctx_line_to (&fctx, FPointI( 3, -10));
-	fctx_end_fill(&fctx);
+	// fixed_t h_bez = 2;
+	// fixed_t h_ins = 6;
+	//
+	// fctx_set_fill_color(&fctx, g_palette[HAND_COLOR]);
+	// fctx_set_offset(&fctx, f_center);
+	// fctx_set_scale(&fctx, FPointOne, FPointOne);
+	// fctx_set_rotation(&fctx, hour_angle);
+	//
+	// fctx_begin_fill(&fctx);
+	// fctx_move_to (&fctx, FPointI( 3,		 -h_ins));
+	// fctx_line_to (&fctx, FPointI( 3 + h_bez, -h_bez - h_ins ));
+	// fctx_line_to (&fctx, FPointI( 3,		 -45));
+	// fctx_line_to (&fctx, FPointI( 0,		 -50));
+	// fctx_line_to (&fctx, FPointI(-3,		 -45));
+	// fctx_line_to (&fctx, FPointI(-3 - h_bez, -h_bez - h_ins ));
+	// fctx_line_to (&fctx, FPointI(-3,		 -h_ins));
+	// fctx_line_to (&fctx, FPointI( 3,		 -h_ins));
+	// fctx_end_fill(&fctx);
 
 	////////////////////////////////////////////////////////////////////////////
 	// minute hand
 	////////////////////////////////////////////////////////////////////////////
 
-	fctx_set_fill_color(&fctx, g_palette[HAND_COLOR]);
-	fctx_set_offset(&fctx, f_center);
-	fctx_set_scale(&fctx, FPointOne, FPointOne);
-	fctx_set_rotation(&fctx, minute_angle);
+	graphics_context_set_stroke_width(ctx, 6);
+	graphics_context_set_stroke_color(ctx, g_palette[HAND_COLOR]);
+	graphics_draw_line(ctx, center, minute_hand_point);
 
-	fctx_begin_fill(&fctx);
-	fctx_move_to (&fctx, FPointI( 3, -10));
-	fctx_line_to (&fctx, FPointI( 5, -12));
-	fctx_line_to (&fctx, FPointI( 3, -77));
-	fctx_line_to (&fctx, FPointI( 0, -82));
-	fctx_line_to (&fctx, FPointI(-3, -77));
-	fctx_line_to (&fctx, FPointI(-5, -12));
-	fctx_line_to (&fctx, FPointI(-3, -10));
-	fctx_line_to (&fctx, FPointI( 3, -10));
-	fctx_end_fill(&fctx);
-
-	fctx_set_fill_color(&fctx, GColorDarkGray);
-	fctx_begin_fill(&fctx);
-	fctx_plot_circle(&fctx, &f_center, 6*16);
-	fctx_end_fill(&fctx);
+	// fctx_set_fill_color(&fctx, g_palette[HAND_COLOR]);
+	// fctx_set_offset(&fctx, f_center);
+	// fctx_set_scale(&fctx, FPointOne, FPointOne);
+	// fctx_set_rotation(&fctx, minute_angle);
+	//
+	// fctx_begin_fill(&fctx);
+	// fctx_move_to (&fctx, FPointI( 3,		 -h_ins));
+	// fctx_line_to (&fctx, FPointI( 3 + h_bez, -h_bez - h_ins ));
+	// fctx_line_to (&fctx, FPointI( 3,		 -73));
+	// fctx_line_to (&fctx, FPointI( 0,		 -78));
+	// fctx_line_to (&fctx, FPointI(-3,		 -73));
+	// fctx_line_to (&fctx, FPointI(-3 - h_bez, -h_bez - h_ins ));
+	// fctx_line_to (&fctx, FPointI(-3,		 -h_ins));
+	// fctx_line_to (&fctx, FPointI( 3,		 -h_ins));
+	// fctx_end_fill(&fctx);
+	//
+	// fctx_set_fill_color(&fctx, GColorDarkGray);
+	// fctx_begin_fill(&fctx);
+	// fctx_plot_circle(&fctx, &f_center, 5*16);
+	// fctx_end_fill(&fctx);
 
 	////////////////////////////////////////////////////////////////////////////
 	// second hand
@@ -215,7 +240,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	}
 
 	// deinit fctx
-	fctx_deinit_context(&fctx);
+	// fctx_deinit_context(&fctx);
 }
 
 static void date_update_proc(Layer *layer, GContext *ctx) {
