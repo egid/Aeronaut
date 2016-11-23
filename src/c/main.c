@@ -3,6 +3,8 @@
 #include <pebble.h>
 // #include <pebble-fctx/fctx.h>
 
+#include "modules/util.h"
+
 static Window *s_window;
 static Layer *bg_layer, *s_date_layer, *s_hands_layer;
 static TextLayer *s_num_label;
@@ -15,9 +17,9 @@ enum Palette {
 	BEZEL_COLOR,
 	FACE_COLOR,
 	HAND_COLOR,
-	HAND_ACCENT_COLOR,
+	SECOND_HAND_COLOR,
 	GMT_HAND_COLOR,
-	HOUR_TEXT_COLOR,
+	COMPLICATION_COLOR,
 	PALETTE_SIZE
 };
 
@@ -26,32 +28,6 @@ GColor g_palette[PALETTE_SIZE];
 bool use_seconds = false;
 bool hour_ticks = true;
 bool minute_ticks = true;
-
-
-// --------------------------------------------------------------------------
-// Utility functions.
-// --------------------------------------------------------------------------
-#define FIXED_POINT_SCALE 16
-#define INT_TO_FIXED(a) ((a) * FIXED_POINT_SCALE)
-#define FIXED_TO_INT(a) ((a) / FIXED_POINT_SCALE)
-#define FIXED_MULTIPLY(a, b) (((a) * (b)) / FIXED_POINT_SCALE)
-
-// #define FPoint(x, y) ((FPoint){(x), (y)})
-// #define FPointI(x, y) ((FPoint){INT_TO_FIXED(x), INT_TO_FIXED(y)})
-
-
-// static inline FPoint clockToCartesian(FPoint center, fixed_t radius, int32_t angle) {
-// 	FPoint pt;
-// 	int32_t c = cos_lookup(angle);
-// 	int32_t s = sin_lookup(angle);
-// 	pt.x = center.x + s * radius / TRIG_MAX_RATIO;
-// 	pt.y = center.y - c * radius / TRIG_MAX_RATIO;
-// 	return pt;
-// }
-
-static int32_t get_angle(int value, int total) {
-	return (value * 360) / total;
-}
 
 
 // --------------------------------------------------------------------------
@@ -68,7 +44,7 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 	if (minute_ticks) {
 		graphics_context_set_fill_color(ctx, g_palette[BEZEL_COLOR]);
 		graphics_context_set_stroke_width(ctx, 1);
-		graphics_context_set_stroke_color(ctx, GColorDarkGray);
+		graphics_context_set_stroke_color(ctx, g_palette[BEZEL_COLOR]);
 		for (int i = 1; i < 60; i++) {
 			GRect frame = grect_inset(bounds, GEdgeInsets(3));
 			GRect frame2 = grect_inset(bounds, GEdgeInsets(6));
@@ -146,7 +122,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	// GMT pointer
 	////////////////////////////////////////////////////////////////////////////
 
-	graphics_context_set_fill_color(ctx, GColorChromeYellow );
+	graphics_context_set_fill_color(ctx, g_palette[GMT_HAND_COLOR]);
 	gpath_rotate_to(s_gmt_arrow, gmt_angle);
 	gpath_draw_filled(ctx, s_gmt_arrow);
 
@@ -233,11 +209,17 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 		GPoint second_hand_point = radial_gpoint(center, second_hand_length, second_angle);
 
 		graphics_context_set_stroke_width(ctx, 1);
-		graphics_context_set_stroke_color(ctx, GColorRed);
+		graphics_context_set_stroke_color(ctx, g_palette[SECOND_HAND_COLOR]);
 		graphics_draw_line(ctx, second_hand, second_hand_point);
-		graphics_context_set_stroke_color(ctx, GColorDarkGray);
-		graphics_draw_line(ctx, second_hand, center);
 	}
+
+
+	////////////////////////////////////////////////////////////////////////////
+	// center pivot
+	////////////////////////////////////////////////////////////////////////////
+	graphics_context_set_fill_color(ctx, g_palette[FACE_COLOR]);
+	graphics_fill_circle(ctx, center, 7);
+
 
 	// deinit fctx
 	// fctx_deinit_context(&fctx);
@@ -271,8 +253,8 @@ static void window_load(Window *window) {
 		GRect(140, 77, 18, 20),
 		GRect(73, 114, 18, 20)));
 	text_layer_set_text(s_num_label, s_num_buffer);
-	text_layer_set_background_color(s_num_label, GColorBlack);
-	text_layer_set_text_color(s_num_label, GColorLightGray);
+	text_layer_set_background_color(s_num_label, g_palette[FACE_COLOR]);
+	text_layer_set_text_color(s_num_label, g_palette[COMPLICATION_COLOR]);
 	text_layer_set_font(s_num_label, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
 
 	layer_add_child(s_date_layer, text_layer_get_layer(s_num_label));
@@ -292,12 +274,12 @@ static void window_unload(Window *window) {
 }
 
 static void init() {
-	g_palette[      BEZEL_COLOR] = GColorWhite;
-	g_palette[       FACE_COLOR] = GColorBlack;
-	g_palette[		 HAND_COLOR] = GColorWhite;
-	g_palette[HAND_ACCENT_COLOR] = GColorLightGray;
-	g_palette[   GMT_HAND_COLOR] = GColorChromeYellow;
-	g_palette[  HOUR_TEXT_COLOR] = PBL_IF_COLOR_ELSE(GColorBlack, GColorBlack);
+	g_palette[       BEZEL_COLOR] = GColorWhite;
+	g_palette[        FACE_COLOR] = GColorBlack;
+	g_palette[        HAND_COLOR] = GColorWhite;
+	g_palette[ SECOND_HAND_COLOR] = GColorRed;
+	g_palette[    GMT_HAND_COLOR] = GColorChromeYellow;
+	g_palette[COMPLICATION_COLOR] = GColorLightGray;
 
 	s_window = window_create();
 	window_set_background_color(s_window, g_palette[FACE_COLOR]);
