@@ -31,7 +31,7 @@ bool use_fctx = true;
 bool use_seconds = false;
 bool hour_ticks = true;
 bool minute_ticks = true;
-bool complications_on = true;
+bool complications_on = false;
 bool dark_theme = true;
 
 // --------------------------------------------------------------------------
