@@ -6,7 +6,7 @@
 #include "modules/util.h"
 
 static Window *s_window;
-static Layer *bg_layer, *s_date_layer, *s_hands_layer;
+static Layer *bg_layer, *s_date_layer, *s_complication_layer, *s_hands_layer;
 static TextLayer *s_num_label;
 
 static GPath *s_tick_paths[NUM_CLOCK_TICKS];
@@ -28,7 +28,8 @@ GColor g_palette[PALETTE_SIZE];
 bool use_seconds = false;
 bool hour_ticks = true;
 bool minute_ticks = true;
-
+bool complications_on = false;
+bool dark_theme = true;
 
 // --------------------------------------------------------------------------
 // Main functions.
@@ -37,7 +38,7 @@ bool minute_ticks = true;
 static void bg_update_proc(Layer *layer, GContext *ctx) {
 	GRect bounds = layer_get_bounds(layer);
 	// FPoint center = FPointI(bounds.size.w / 2, bounds.size.h / 2);
-	GPoint center = grect_center_point(&bounds);
+	// GPoint center = grect_center_point(&bounds);
 
 	// minute ticks
 	// create all but 1200
@@ -233,6 +234,23 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
 	text_layer_set_text(s_num_label, s_num_buffer);
 }
 
+static void complication_update_proc(Layer *layer, GContext *ctx) {
+	float step_goal = .7;
+	GRect layer_bounds = layer_get_bounds(layer);
+	GRect bounds = GRect(
+		layer_bounds.origin.x + 20,
+		layer_bounds.origin.y + (layer_bounds.size.w * 3 / 8),
+		layer_bounds.size.w / 4,
+		layer_bounds.size.h / 4
+	);
+	// GRect bounds = GRect(layer_bounds.origin.x, layer_bounds.origin.y,
+	//                      layer_bounds.size.w / 2, layer_bounds.size.h);
+
+	graphics_context_set_stroke_color(ctx, g_palette[COMPLICATION_COLOR]);
+	graphics_context_set_stroke_width(ctx, 2);
+	graphics_draw_arc(ctx, bounds, GOvalScaleModeFitCircle, 0, DEG_TO_TRIGANGLE(step_goal * 360));
+}
+
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
 	layer_mark_dirty(window_get_root_layer(s_window));
 }
@@ -248,6 +266,12 @@ static void window_load(Window *window) {
 	s_date_layer = layer_create(bounds);
 	layer_set_update_proc(s_date_layer, date_update_proc);
 	layer_add_child(window_layer, s_date_layer);
+
+	if (complications_on) {
+		s_complication_layer = layer_create(bounds);
+		layer_set_update_proc(s_complication_layer, complication_update_proc);
+		layer_add_child(window_layer, s_complication_layer);
+	}
 
 	s_num_label = text_layer_create(PBL_IF_ROUND_ELSE(
 		GRect(140, 77, 18, 20),
@@ -268,15 +292,19 @@ static void window_unload(Window *window) {
 	layer_destroy(bg_layer);
 	layer_destroy(s_date_layer);
 
+	if (complications_on) {
+		layer_destroy(s_complication_layer);
+	}
+
 	text_layer_destroy(s_num_label);
 
 	layer_destroy(s_hands_layer);
 }
 
 static void init() {
-	g_palette[       BEZEL_COLOR] = GColorWhite;
-	g_palette[        FACE_COLOR] = GColorBlack;
-	g_palette[        HAND_COLOR] = GColorWhite;
+	g_palette[       BEZEL_COLOR] = dark_theme ? GColorWhite : GColorBlack;
+	g_palette[        FACE_COLOR] = dark_theme ? GColorBlack : GColorWhite;
+	g_palette[        HAND_COLOR] = dark_theme ? GColorWhite : GColorBlack;
 	g_palette[ SECOND_HAND_COLOR] = GColorRed;
 	g_palette[    GMT_HAND_COLOR] = GColorChromeYellow;
 	g_palette[COMPLICATION_COLOR] = GColorLightGray;
