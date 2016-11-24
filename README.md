@@ -20,4 +20,4 @@ It's in very early stages right now; basically none of the planned features are 
 - [x] svg-derived assets
 
 
-Aeronaut was originally derived from [SimpleAnalog](https://github.com/pebble-examples/simple-analog), but only a few small chunks of that example remain.
+Aeronaut was originally derived from [SimpleAnalog](https://github.com/pebble-examples/simple-analog/blob/master/LICENSE), but only a few small chunks of that example remain.
