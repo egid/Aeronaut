@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+	<defs>
+		<path fill="black" id="utc" d="	M  6 -70
+										L  1 -77
+										L  1 -85
+										L -1 -85
+										L -1 -77
+										L -6 -70
+										L  6 -70" />
+		<path fill="black" id="hour" d="M  3  -6
+										L  5  -8
+										L  3 -45
+										L  0 -50
+										L -3 -45
+										L -5  -8
+										L -3  -6
+										L  3  -6" />
+		<path fill="black" id="min"  d="M  3  -6
+										L  5  -8
+										L  3 -73
+										L  0 -78
+										L -3 -73
+										L -5  -8
+										L -3  -6
+										L  3  -6" />
+
+	</defs>
+</svg>

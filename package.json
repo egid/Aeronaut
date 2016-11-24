@@ -1,35 +1,54 @@
 {
-  "author": "Eric Gideon",
-  "dependencies": {
-    "pebble-clay": "^1.0.3",
-    "pebble-fctx": "^1.6.2"
-  },
-  "keywords": [],
-  "name": "aeronaut",
-  "pebble": {
-    "capabilities": [
-      "configurable"
-    ],
-    "displayName": "Aeronaut",
-    "enableMultiJS": true,
-    "messageKeys": [
-      "BackgroundColor",
-      "ForegroundColor",
-      "SecondHand",
-      "UtcHand"
-    ],
-    "projectType": "native",
-    "resources": {
-      "media": []
-    },
-    "sdkVersion": "3",
-    "targetPlatforms": [
-      "chalk"
-    ],
-	"uuid": "872855a6-2bb8-4dd5-b438-d21d4045e6ab",
-    "watchapp": {
-      "watchface": true
-    }
-  },
-  "version": "0.1.0"
+	"author": "Eric Gideon",
+	"dependencies": {
+		"pebble-clay": "^1.0.3",
+		"pebble-fctx": "^1.6.2"
+	},
+	"keywords": [],
+	"name": "aeronaut",
+	"pebble": {
+		"capabilities": [
+			"configurable"
+		],
+		"displayName": "Aeronaut",
+		"enableMultiJS": true,
+		"messageKeys": [
+			"BackgroundColor",
+			"ForegroundColor",
+			"SecondHand",
+			"UtcHand"
+		],
+		"projectType": "native",
+		"resources": {
+			"media": [
+				{
+					"name": "MINUTE_FPATH",
+					"type": "raw",
+					"file": "min.fpath"
+				},
+				{
+					"name": "HOUR_FPATH",
+					"type": "raw",
+					"file": "hour.fpath"
+				},
+				{
+					"name": "UTC_FPATH",
+					"type": "raw",
+					"file": "utc.fpath"
+				}
+			]
+		},
+		"sdkVersion": "3",
+		"targetPlatforms": [
+			"chalk"
+		],
+		"uuid": "872855a6-2bb8-4dd5-b438-d21d4045e6ab",
+		"watchapp": {
+			"watchface": true
+		}
+	},
+	"version": "0.1.0",
+	"devDependencies": {
+		"pebble-fctx-compiler": "^1.2.1"
+	}
 }
