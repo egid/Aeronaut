@@ -1,7 +1,7 @@
 {
   "name": "aeronaut",
   "author": "Eric Gideon",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "license": "MIT",
   "keywords": [
     "pebble-app"
@@ -42,7 +42,10 @@
     },
     "sdkVersion": "3",
     "targetPlatforms": [
-      "chalk"
+      "chalk",
+	  "basalt",
+	  "diorite",
+	  "emery"
     ],
     "uuid": "872855a6-2bb8-4dd5-b438-d21d4045e6ab",
     "watchapp": {
