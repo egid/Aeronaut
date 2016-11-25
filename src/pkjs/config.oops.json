@@ -1,0 +1,41 @@
+[
+	{
+		"type": "heading",
+		"defaultValue": "Aeronaut"
+	},
+	{
+		"type": "text",
+		"defaultValue": "Here is some introductory text."
+	},
+	{
+		"type": "section",
+		"items": [
+			{
+				"type": "heading",
+				"defaultValue": "Style"
+			},
+			{
+				"type": "toggle",
+				"messageKey": "DarkTheme",
+				"label": "Use dark theme",
+				"defaultValue": true
+			},
+			{
+				"type": "toggle",
+				"messageKey": "ShowSecondHand",
+				"label": "Enable seconds",
+				"defaultValue": false
+			},
+			{
+				"type": "toggle",
+				"messageKey": "ShowUtcHand",
+				"label": "Enable GMT pointer",
+				"defaultValue": true
+			}
+		]
+	},
+	{
+		"type": "submit",
+		"defaultValue": "Save Settings"
+	}
+]

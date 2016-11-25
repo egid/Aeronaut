@@ -1,4 +1,7 @@
 #include "util.h"
+#include <pebble-fctx/fctx.h>
+#include <pebble-fctx/fpath.h>
+
 
 // --------------------------------------------------------------------------
 // Utility functions.

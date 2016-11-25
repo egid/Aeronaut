@@ -10,14 +10,22 @@ It's in very early stages right now; basically none of the planned features are 
 
 - [x] GMT pointer
 - [ ] Support platforms other than Chalk
-- [ ] Settings via Clay
-- [ ] Configurable colors
-- [ ] Configurable complications
-- [ ] Health complication
-- [ ] Weather complication
-- [ ] Aviation weather (METAR) complication - data from location or a locked station
+- [x] Settings via Clay
+	- [x] light/dark themes
+	- [ ] colors
+	- [ ] GMT hand time zone offset
+	- [ ] active complications
+	- [ ] low-power quiet time mode
+	- [x] second hand (on/off)
+	- [ ] tap/shake for second hand
+- [ ] complications
+	- [x] Date
+	- [ ] Battery / Bluetooth
+	- [ ] Health
+	- [ ] Weather
+	- [ ] Aviation weather (METAR)  - data from location or a locked station
 - [x] `fctx` for better antialiasing
 - [x] svg-derived assets
 
 
-Aeronaut was originally derived from [SimpleAnalog](https://github.com/pebble-examples/simple-analog/blob/master/LICENSE), but only a few small chunks of that example remain.
+Aeronaut used [SimpleAnalog](https://github.com/pebble-examples/simple-analog/blob/master/LICENSE) as a starting point.

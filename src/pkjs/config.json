@@ -1,0 +1,23 @@
+[
+    {
+        "type": "section",
+        "items": [
+            {
+                "type": "toggle",
+                "messageKey": "DARK_THEME",
+                "label": "Dark theme",
+                "defaultValue": true
+            },
+            {
+                "type": "toggle",
+                "messageKey": "SHOW_SECONDS",
+                "label": "Seconds enabled",
+                "defaultValue": false
+            }
+        ]
+    },
+    {
+        "type": "submit",
+        "defaultValue": "Save"
+    }
+]
