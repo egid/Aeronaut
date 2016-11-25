@@ -9,7 +9,7 @@ It's in very early stages right now; basically none of the planned features are 
 # Tasks
 
 - [x] GMT pointer
-- [ ] Support platforms other than Chalk
+- [x] Support platforms other than Chalk
 - [x] Settings via Clay
 	- [x] light/dark themes
 	- [ ] colors

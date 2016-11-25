@@ -30,6 +30,8 @@ enum Palette {
 
 GColor g_palette[PALETTE_SIZE];
 
+static bool is_emery = PBL_DISPLAY_HEIGHT == 228 ? true : false;
+
 bool hour_ticks = true;
 bool minute_ticks = true;
 bool complications_on = false;
@@ -88,7 +90,7 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 		// Double-tick first
 		graphics_context_set_fill_color(ctx, g_palette[BEZEL_COLOR]);
 		for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
-			const int x_offset = PBL_IF_ROUND_ELSE(18, 0);
+			const int x_offset = PBL_IF_ROUND_ELSE(18, is_emery ? 28 : 0);
 			const int y_offset = PBL_IF_ROUND_ELSE(6, 14);
 			gpath_move_to(s_tick_paths[i], GPoint(x_offset, y_offset));
 			gpath_draw_filled(ctx, s_tick_paths[i]);
@@ -144,7 +146,11 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 	fctx_set_fill_color(&fctx, g_palette[GMT_HAND_COLOR]);
 	fctx_set_offset(&fctx, f_center);
-	fctx_set_scale(&fctx, PBL_IF_ROUND_ELSE(FPointOne, FPoint(10,10)), PBL_IF_ROUND_ELSE(FPointOne, FPoint(8,8)));
+	if (is_emery) {
+		fctx_set_scale(&fctx, FPoint(9,9), FPoint(10,10));
+	} else {
+		fctx_set_scale(&fctx, PBL_IF_ROUND_ELSE(FPointOne, FPoint(10,10)), PBL_IF_ROUND_ELSE(FPointOne, FPoint(8,8)));
+	}
 	fctx_set_rotation(&fctx, gmt_angle);
 
 	fctx_begin_fill(&fctx);
@@ -158,7 +164,11 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 	fctx_set_fill_color(&fctx, g_palette[HAND_COLOR]);
 	fctx_set_offset(&fctx, f_center);
-	fctx_set_scale(&fctx, PBL_IF_ROUND_ELSE(FPointOne, FPoint(10,10)), PBL_IF_ROUND_ELSE(FPointOne, FPoint(8,8)));
+	if (is_emery) {
+		fctx_set_scale(&fctx, FPoint(10,10), FPoint(12,12));
+	} else {
+		fctx_set_scale(&fctx, PBL_IF_ROUND_ELSE(FPointOne, FPoint(10,10)), PBL_IF_ROUND_ELSE(FPointOne, FPoint(8,8)));
+	}
 	fctx_set_rotation(&fctx, hour_angle);
 
 	fctx_begin_fill(&fctx);
@@ -172,7 +182,11 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 	fctx_set_fill_color(&fctx, g_palette[HAND_COLOR]);
 	fctx_set_offset(&fctx, f_center);
-	fctx_set_scale(&fctx, PBL_IF_ROUND_ELSE(FPointOne, FPoint(10,10)), PBL_IF_ROUND_ELSE(FPointOne, FPoint(8,8)));
+	if (is_emery) {
+		fctx_set_scale(&fctx, FPoint(10,10), FPoint(12,12));
+	} else {
+		fctx_set_scale(&fctx, PBL_IF_ROUND_ELSE(FPointOne, FPoint(10,10)), PBL_IF_ROUND_ELSE(FPointOne, FPoint(8,8)));
+	}
 	fctx_set_rotation(&fctx, minute_angle);
 
 	fctx_begin_fill(&fctx);
@@ -252,7 +266,10 @@ static void window_load(Window *window) {
 
 	s_num_label = text_layer_create(PBL_IF_ROUND_ELSE(
 		GRect(140, 77, 18, 20),
-		GRect(110, 72, 18, 20)));
+		is_emery
+			? GRect(160, 100, 18, 20)
+			: GRect(110, 72, 18, 20)
+		));
 	text_layer_set_text(s_num_label, s_num_buffer);
 	text_layer_set_background_color(s_num_label, g_palette[FACE_COLOR]);
 	text_layer_set_text_color(s_num_label, g_palette[COMPLICATION_COLOR]);
