@@ -1,6 +1,6 @@
 # Aeronaut
 
-Aeronaut is a watch face inspired by pilot's watches. It's got a minimal bezel, large (yet precise) hands, and a 24-hour UTC (GMT) pointer.
+Aeronaut is a watch face inspired by pilot's watches. It's got a minimal bezel, large (yet precise) hands, and a 24-hour UTC (GMT) pointer. It is optimized for the Pebble Time Round, but works on all Pebble types (except classic) and is [available on the Pebble appstore](https://apps.getpebble.com/en_US/application/5830a01b00355a2f3a00004f?hardware=chalk).
 
 ![](aeronaut.png)
 
