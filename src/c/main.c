@@ -18,6 +18,11 @@ static char s_num_buffer[4];
 
 static EventHandle s_settings_event_handle;
 
+#ifdef PBL_HEALTH
+static bool s_sleeping;
+static EventHandle s_health_event_handle;
+#endif
+
 enum Palette {
 	BEZEL_COLOR,
 	FACE_COLOR,
@@ -62,6 +67,29 @@ static void settings_handler(void *context) {
 
 	layer_mark_dirty(window_get_root_layer(s_window));
 }
+
+#ifdef PBL_HEALTH
+static void prv_health_event_handler(HealthEventType event, void *context) {
+	if (event == HealthEventSignificantUpdate) {
+		prv_health_event_handler(HealthEventSleepUpdate, context);
+	} else if (event == HealthEventSleepUpdate || (event == HealthEventMovementUpdate && s_sleeping)) {
+		HealthActivityMask mask = health_service_peek_current_activities();
+
+		bool asleep = (mask & HealthActivitySleep) || (mask & HealthActivityRestfulSleep);
+
+		if (asleep && !s_sleeping) {
+			tick_timer_service_subscribe(HOUR_UNIT, handle_tick);
+		} else {
+			if (!enamel_get_SHOW_SECONDS()) {
+				tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
+			} else {
+				tick_timer_service_subscribe(SECOND_UNIT, handle_tick);
+			}
+		}
+		s_sleeping = (mask & HealthActivitySleep) || (mask & HealthActivityRestfulSleep);
+	}
+}
+#endif
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
 	GRect bounds = layer_get_bounds(layer);
@@ -258,7 +286,7 @@ static void window_load(Window *window) {
 	layer_set_update_proc(s_date_layer, date_update_proc);
 	layer_add_child(window_layer, s_date_layer);
 
-	if (complications_on) {
+	if (complications_on || s_sleeping) {
 		s_complication_layer = layer_create(bounds);
 		layer_set_update_proc(s_complication_layer, complication_update_proc);
 		layer_add_child(window_layer, s_complication_layer);
@@ -302,8 +330,11 @@ static void window_unload(Window *window) {
 
 static void init() {
 	enamel_init();
-
 	events_app_message_open();
+
+	if (s_health_event_handle == NULL) {
+		s_health_event_handle = events_health_service_events_subscribe(prv_health_event_handler, NULL);
+	}
 
 	g_minute = fpath_create_from_resource(RESOURCE_ID_MINUTE_FPATH);
 	g_hour = fpath_create_from_resource(RESOURCE_ID_HOUR_FPATH);
@@ -327,6 +358,13 @@ static void init() {
 }
 
 static void deinit() {
+	#ifdef PBL_HEALTH
+	    if (s_health_event_handle != NULL) {
+	        events_health_service_events_unsubscribe(s_health_event_handle);
+	        s_health_event_handle = NULL;
+	    }
+	#endif
+
 	fpath_destroy(g_minute);
 	fpath_destroy(g_hour);
 	fpath_destroy(g_utc);
