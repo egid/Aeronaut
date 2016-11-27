@@ -20,6 +20,7 @@ static EventHandle s_settings_event_handle;
 
 #ifdef PBL_HEALTH
 static bool s_sleeping;
+bool s_use_sleep;
 static EventHandle s_health_event_handle;
 #endif
 
@@ -27,8 +28,6 @@ enum Palette {
 	BEZEL_COLOR,
 	FACE_COLOR,
 	HAND_COLOR,
-	SECOND_HAND_COLOR,
-	GMT_HAND_COLOR,
 	COMPLICATION_COLOR,
 	PALETTE_SIZE
 };
@@ -52,9 +51,9 @@ static void settings_handler(void *context) {
 	g_palette[       BEZEL_COLOR] = enamel_get_DARK_THEME() ? GColorWhite : GColorBlack;
 	g_palette[        FACE_COLOR] = enamel_get_DARK_THEME() ? GColorBlack : GColorWhite;
 	g_palette[        HAND_COLOR] = enamel_get_DARK_THEME() ? GColorWhite : GColorBlack;
-	g_palette[ SECOND_HAND_COLOR] = GColorRed;
-	g_palette[    GMT_HAND_COLOR] = GColorChromeYellow;
-	g_palette[COMPLICATION_COLOR] = GColorLightGray;
+	g_palette[COMPLICATION_COLOR] = enamel_get_DARK_THEME() ? GColorLightGray : GColorDarkGray;
+
+	s_use_sleep = enamel_get_SLEEP_MODE_ENABLED();
 
 	window_set_background_color(s_window, g_palette[FACE_COLOR]);
 	text_layer_set_text_color(s_num_label, g_palette[COMPLICATION_COLOR]);
@@ -70,9 +69,9 @@ static void settings_handler(void *context) {
 
 #ifdef PBL_HEALTH
 static void prv_health_event_handler(HealthEventType event, void *context) {
-	if (event == HealthEventSignificantUpdate) {
+	if (s_use_sleep && event == HealthEventSignificantUpdate) {
 		prv_health_event_handler(HealthEventSleepUpdate, context);
-	} else if (event == HealthEventSleepUpdate || (event == HealthEventMovementUpdate && s_sleeping)) {
+	} else if (s_use_sleep && ( event == HealthEventSleepUpdate || (event == HealthEventMovementUpdate && s_sleeping) )) {
 		HealthActivityMask mask = health_service_peek_current_activities();
 
 		bool asleep = (mask & HealthActivitySleep) || (mask & HealthActivityRestfulSleep);
@@ -156,7 +155,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	struct tm *gmt = gmtime(&now);
 
 	// angles
-	int32_t gmt_angle = (TRIG_MAX_ANGLE * (((gmt->tm_hour) * 6) + (gmt->tm_min / 10))) / (24 * 6);
+	int32_t gmt_angle = (TRIG_MAX_ANGLE * (((gmt->tm_hour + enamel_get_OFFSET_GMT_HAND()) * 6) + (gmt->tm_min / 10))) / (24 * 6);
 	int32_t second_angle = TRIG_MAX_ANGLE * t->tm_sec / 60;
 	int32_t minute_angle = TRIG_MAX_ANGLE * t->tm_min / 60;
 	int32_t hour_angle = (TRIG_MAX_ANGLE * (((t->tm_hour % 12) * 6) + (t->tm_min / 10))) / (12 * 6);
@@ -172,7 +171,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	// GMT pointer
 	////////////////////////////////////////////////////////////////////////////
 
-	fctx_set_fill_color(&fctx, g_palette[GMT_HAND_COLOR]);
+	fctx_set_fill_color(&fctx, enamel_get_COLOR_GMT_HAND());
 	fctx_set_offset(&fctx, f_center);
 	if (is_emery) {
 		fctx_set_scale(&fctx, FPoint(9,9), FPoint(10,10));
@@ -231,8 +230,8 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 		GPoint second_hand = radial_gpoint(center, second_hand_length - 15, second_angle);
 		GPoint second_hand_point = radial_gpoint(center, second_hand_length, second_angle);
 
-		graphics_context_set_stroke_width(ctx, 1);
-		graphics_context_set_stroke_color(ctx, g_palette[SECOND_HAND_COLOR]);
+		graphics_context_set_stroke_width(ctx, 2);
+		graphics_context_set_stroke_color(ctx, enamel_get_COLOR_SECOND_HAND());
 		graphics_draw_line(ctx, second_hand, second_hand_point);
 	}
 

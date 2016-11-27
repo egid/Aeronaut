@@ -1,7 +1,7 @@
 {
   "name": "aeronaut",
   "author": "Eric Gideon",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "license": "MIT",
   "keywords": [
     "pebble-app"
@@ -18,7 +18,11 @@
     "enableMultiJS": true,
     "messageKeys": [
       "DARK_THEME",
-      "SHOW_SECONDS"
+	  "COLOR_GMT_HAND",
+	  "OFFSET_GMT_HAND",
+	  "COLOR_SECOND_HAND",
+	  "SHOW_SECONDS",
+	  "SLEEP_MODE_ENABLED"
     ],
     "projectType": "native",
     "resources": {

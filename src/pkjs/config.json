@@ -1,23 +1,68 @@
 [
-    {
-        "type": "section",
-        "items": [
-            {
-                "type": "toggle",
-                "messageKey": "DARK_THEME",
-                "label": "Dark theme",
-                "defaultValue": true
-            },
-            {
-                "type": "toggle",
-                "messageKey": "SHOW_SECONDS",
-                "label": "Seconds enabled",
-                "defaultValue": false
-            }
-        ]
-    },
-    {
-        "type": "submit",
-        "defaultValue": "Save"
-    }
+	{
+		"type": "section",
+		"items": [
+			{
+				"type": "toggle",
+				"messageKey": "DARK_THEME",
+				"label": "Dark theme",
+				"defaultValue": true
+			},
+			{
+				"type": "color",
+				"messageKey": "COLOR_GMT_HAND",
+				"label": "GMT hand color",
+				"defaultValue": "FFAA00",
+				"sunlight": false,
+				"allowGray": true
+			},
+			{
+				"type": "slider",
+				"messageKey": "OFFSET_GMT_HAND",
+				"defaultValue": 0,
+				"label": "GMT hand offset",
+				"description": "Adjust to set the timezone of the pointer. 0 = GMT, which is the default.",
+				"min": -12,
+				"max": 12,
+				"step": 1
+			}
+		]
+	},
+	{
+		"type": "section",
+		"items": [
+			{
+				"type": "toggle",
+				"messageKey": "SHOW_SECONDS",
+				"label": "Seconds enabled",
+				"defaultValue": false,
+				"description": "Be aware that this will negatively affect battery life."
+			},
+			{
+				"type": "color",
+				"messageKey": "COLOR_SECOND_HAND",
+				"label": "Second hand color",
+				"defaultValue": "FF0000",
+				"sunlight": false,
+				"allowGray": true
+			}
+		]
+	},
+	{
+		"type": "section",
+		"capabilities": ["HEALTH"],
+		"items": [
+			{
+				"type": "toggle",
+				"messageKey": "SLEEP_MODE_ENABLED",
+				"label": "Sleep mode enabled",
+				"defaultValue": false,
+				"description": "Sleep mode updates the watchface hourly when you're asleep. When Pebble thinks you've woken up, it returns to updates every minute (or second, if the hand is shown)."
+			}
+		]
+	},
+	{
+		"type": "submit",
+		"defaultValue": "Save"
+	}
 ]

@@ -12,12 +12,12 @@ It's in very early stages right now; basically none of the planned features are 
 - [x] Support platforms other than Chalk
 - [x] Settings via Clay
 	- [x] light/dark themes
-	- [ ] colors
-	- [ ] GMT hand time zone offset
+	- [x] colors
+	- [x] configurable GMT hand time zone offset
 	- [ ] active complications
-	- [ ] low-power quiet time mode
 	- [x] second hand (on/off)
 	- [ ] tap/shake for second hand
+	- [x] low-power quiet time mode
 - [ ] complications
 	- [x] Date
 	- [ ] Battery / Bluetooth
