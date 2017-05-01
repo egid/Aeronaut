@@ -33,6 +33,18 @@
 		"items": [
 			{
 				"type": "toggle",
+				"messageKey": "SHOW_HOUR_DIGITS",
+				"label": "UTC numerals enabled",
+				"defaultValue": false,
+				"description": "Shows the 24h time scale around the outside of the face."
+			}
+		]
+	},
+	{
+		"type": "section",
+		"items": [
+			{
+				"type": "toggle",
 				"messageKey": "SHOW_SECONDS",
 				"label": "Seconds enabled",
 				"defaultValue": false,

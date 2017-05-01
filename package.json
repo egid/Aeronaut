@@ -1,7 +1,7 @@
 {
   "name": "aeronaut",
   "author": "Eric Gideon",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "license": "MIT",
   "keywords": [
     "pebble-app"
@@ -11,18 +11,21 @@
     "logging": "^2.0.21",
     "pebble-clay": "^1.0.3",
     "pebble-events": "^1.2.0",
-    "pebble-fctx": "^1.6.2"
+    "pebble-fctx": "^1.6.2",
+    "pebble-fctx-compiler": "^1.2.1"
   },
   "pebble": {
     "displayName": "Aeronaut",
+    "capabilities": [ "health" ],
     "enableMultiJS": true,
     "messageKeys": [
       "DARK_THEME",
-	  "COLOR_GMT_HAND",
-	  "OFFSET_GMT_HAND",
-	  "COLOR_SECOND_HAND",
-	  "SHOW_SECONDS",
-	  "SLEEP_MODE_ENABLED"
+      "COLOR_GMT_HAND",
+      "OFFSET_GMT_HAND",
+      "COLOR_SECOND_HAND",
+      "SHOW_SECONDS",
+      "SHOW_HOUR_DIGITS",
+      "SLEEP_MODE_ENABLED"
     ],
     "projectType": "native",
     "resources": {
@@ -41,15 +44,24 @@
           "name": "UTC_FPATH",
           "type": "raw",
           "file": "utc.fpath"
+        },
+        {
+          "type": "bitmap",
+          "name": "NUM_WHITE",
+          "file": "24hw.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "NUM_BLACK",
+          "file": "24hb.png"
         }
       ]
     },
     "sdkVersion": "3",
     "targetPlatforms": [
       "chalk",
-	  "basalt",
-	  "diorite",
-	  "emery"
+      "basalt",
+      "diorite"
     ],
     "uuid": "872855a6-2bb8-4dd5-b438-d21d4045e6ab",
     "watchapp": {

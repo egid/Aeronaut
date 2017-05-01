@@ -15,12 +15,16 @@ static TextLayer *s_num_label;
 static GPath *s_tick_paths[NUM_CLOCK_TICKS];
 static FPath *g_minute, *g_hour, *g_utc;
 static char s_num_buffer[4];
+static GBitmap *hr_bitmap_w;
+static GBitmap *hr_bitmap_b;
+static BitmapLayer *hr_white_layer;
+static BitmapLayer *hr_black_layer;
 
 static EventHandle s_settings_event_handle;
 
 #ifdef PBL_HEALTH
 static bool s_sleeping;
-bool s_use_sleep;
+bool s_use_sleep, s_dark_theme, s_show_hour_digits;
 static EventHandle s_health_event_handle;
 #endif
 
@@ -33,8 +37,6 @@ enum Palette {
 };
 
 GColor g_palette[PALETTE_SIZE];
-
-static bool is_emery = PBL_DISPLAY_HEIGHT == 228 ? true : false;
 
 bool hour_ticks = true;
 bool minute_ticks = true;
@@ -54,6 +56,9 @@ static void settings_handler(void *context) {
 	g_palette[COMPLICATION_COLOR] = enamel_get_DARK_THEME() ? GColorLightGray : GColorDarkGray;
 
 	s_use_sleep = enamel_get_SLEEP_MODE_ENABLED();
+	s_dark_theme = enamel_get_DARK_THEME();
+
+	s_show_hour_digits = enamel_get_SHOW_HOUR_DIGITS();
 
 	window_set_background_color(s_window, g_palette[FACE_COLOR]);
 	text_layer_set_text_color(s_num_label, g_palette[COMPLICATION_COLOR]);
@@ -92,6 +97,15 @@ static void prv_health_event_handler(HealthEventType event, void *context) {
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
 	GRect bounds = layer_get_bounds(layer);
+	int offset_24;
+	if (s_show_hour_digits) {
+		offset_24 = 12;
+		bounds = grect_inset(bounds, GEdgeInsets(offset_24));
+		// bounds = layer_set_bounds(layer, inset);
+	} else {
+		offset_24 = 0;
+		bounds = layer_get_bounds(layer);
+	}
 	// FPoint center = FPointI(bounds.size.w / 2, bounds.size.h / 2);
 	// GPoint center = grect_center_point(&bounds);
 
@@ -117,9 +131,9 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 		// Double-tick first
 		graphics_context_set_fill_color(ctx, g_palette[BEZEL_COLOR]);
 		for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
-			const int x_offset = PBL_IF_ROUND_ELSE(18, is_emery ? 28 : 0);
+			const int x_offset = PBL_IF_ROUND_ELSE(18, 0);
 			const int y_offset = PBL_IF_ROUND_ELSE(6, 14);
-			gpath_move_to(s_tick_paths[i], GPoint(x_offset, y_offset));
+			gpath_move_to(s_tick_paths[i], GPoint(x_offset, y_offset + offset_24));
 			gpath_draw_filled(ctx, s_tick_paths[i]);
 		}
 
@@ -135,6 +149,33 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 			graphics_draw_line(ctx, pos, pos2);
 		}
 	}
+
+	// if (s_show_hour_digits) {
+
+		// // vertical numerals
+		// int hour_multiplier = s_show_24h ? 2 : 1;
+		// graphics_context_set_text_color(ctx, GColorDarkGray);
+		// for (int i = 0; i < 12; i++) {
+		// 	GRect digit_frame = grect_inset(bounds, GEdgeInsets(PBL_IF_ROUND_ELSE(20,0)));
+		// 	GPoint digit_pos = gpoint_from_polar(digit_frame, GOvalScaleModeFitCircle, DEG_TO_TRIGANGLE( get_angle(i, 12) ));
+		//
+		// 	char hour_string[3];
+		// 	int hour_display;
+		// 	if (i == 0) {
+		// 		hour_display = 12 * hour_multiplier;
+		// 	} else {
+		// 		hour_display = i * hour_multiplier;
+		// 	}
+		// 	snprintf(hour_string, sizeof(hour_string),"%d", hour_display);
+		//
+		// 	graphics_draw_text(ctx, hour_string, fonts_get_system_font(FONT_KEY_GOTHIC_14), GRect(digit_pos.x - 10, digit_pos.y - 9, 20, 20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+		// }
+	// }
+	// Show bg digits png
+	bool show_bl = (!s_dark_theme && s_show_hour_digits ? true : false);
+
+	layer_set_hidden(bitmap_layer_get_layer(hr_white_layer), !s_show_hour_digits);
+	layer_set_hidden(bitmap_layer_get_layer(hr_black_layer), !show_bl);
 }
 
 static GPoint radial_gpoint(GPoint center, int16_t length_from_center, int32_t angle) {
@@ -145,9 +186,12 @@ static GPoint radial_gpoint(GPoint center, int16_t length_from_center, int32_t a
 }
 
 static void hands_update_proc(Layer *layer, GContext *ctx) {
-
 	GRect bounds = layer_get_bounds(layer);
 	GPoint center = grect_center_point(&bounds);
+	float modifier = 1.0;
+	if (s_show_hour_digits) {
+		modifier = 0.9;
+	}
 
 	// time stuff
 	time_t now = time(NULL);
@@ -173,11 +217,14 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 	fctx_set_fill_color(&fctx, enamel_get_COLOR_GMT_HAND());
 	fctx_set_offset(&fctx, f_center);
-	if (is_emery) {
-		fctx_set_scale(&fctx, FPoint(9,9), FPoint(10,10));
-	} else {
-		fctx_set_scale(&fctx, PBL_IF_ROUND_ELSE(FPointOne, FPoint(10,10)), PBL_IF_ROUND_ELSE(FPointOne, FPoint(8,8)));
-	}
+	fctx_set_scale(&fctx,
+			PBL_IF_ROUND_ELSE(
+				FPoint(10, 10),
+				FPoint(10,10)
+			), PBL_IF_ROUND_ELSE(
+				FPoint(10*modifier, 10*modifier),
+				FPoint(8*modifier,8*modifier)
+			));
 	fctx_set_rotation(&fctx, gmt_angle);
 
 	fctx_begin_fill(&fctx);
@@ -191,11 +238,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 	fctx_set_fill_color(&fctx, g_palette[HAND_COLOR]);
 	fctx_set_offset(&fctx, f_center);
-	if (is_emery) {
-		fctx_set_scale(&fctx, FPoint(10,10), FPoint(12,12));
-	} else {
-		fctx_set_scale(&fctx, PBL_IF_ROUND_ELSE(FPointOne, FPoint(10,10)), PBL_IF_ROUND_ELSE(FPointOne, FPoint(8,8)));
-	}
+	fctx_set_scale(&fctx, PBL_IF_ROUND_ELSE(FPoint(10, 10), FPoint(10,10)), PBL_IF_ROUND_ELSE(FPoint(10*modifier, 10*modifier), FPoint(8*modifier,8*modifier)));
 	fctx_set_rotation(&fctx, hour_angle);
 
 	fctx_begin_fill(&fctx);
@@ -209,11 +252,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 	fctx_set_fill_color(&fctx, g_palette[HAND_COLOR]);
 	fctx_set_offset(&fctx, f_center);
-	if (is_emery) {
-		fctx_set_scale(&fctx, FPoint(10,10), FPoint(12,12));
-	} else {
-		fctx_set_scale(&fctx, PBL_IF_ROUND_ELSE(FPointOne, FPoint(10,10)), PBL_IF_ROUND_ELSE(FPointOne, FPoint(8,8)));
-	}
+	fctx_set_scale(&fctx, PBL_IF_ROUND_ELSE(FPoint(10, 10), FPoint(10,10)), PBL_IF_ROUND_ELSE(FPoint(10*modifier, 10*modifier), FPoint(8*modifier,8*modifier)));
 	fctx_set_rotation(&fctx, minute_angle);
 
 	fctx_begin_fill(&fctx);
@@ -226,7 +265,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	////////////////////////////////////////////////////////////////////////////
 
 	if (enamel_get_SHOW_SECONDS()) {
-		const int16_t second_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 8, bounds.size.w / 2);
+		const int16_t second_hand_length = PBL_IF_ROUND_ELSE((bounds.size.w / 2) - 8, bounds.size.w / 2) * modifier;
 		GPoint second_hand = radial_gpoint(center, second_hand_length - 15, second_angle);
 		GPoint second_hand_point = radial_gpoint(center, second_hand_length, second_angle);
 
@@ -291,12 +330,7 @@ static void window_load(Window *window) {
 		layer_add_child(window_layer, s_complication_layer);
 	}
 
-	s_num_label = text_layer_create(PBL_IF_ROUND_ELSE(
-		GRect(140, 77, 18, 20),
-		is_emery
-			? GRect(160, 100, 18, 20)
-			: GRect(110, 72, 18, 20)
-		));
+	s_num_label = text_layer_create(PBL_IF_ROUND_ELSE(GRect(130, 77, 18, 20),GRect(110, 72, 18, 20)));
 	text_layer_set_text(s_num_label, s_num_buffer);
 	text_layer_set_background_color(s_num_label, g_palette[FACE_COLOR]);
 	text_layer_set_text_color(s_num_label, g_palette[COMPLICATION_COLOR]);
@@ -347,6 +381,18 @@ static void init() {
 	});
 	window_stack_push(s_window, true);
 
+
+	hr_bitmap_w = gbitmap_create_with_resource(RESOURCE_ID_NUM_WHITE);
+	hr_bitmap_b = gbitmap_create_with_resource(RESOURCE_ID_NUM_BLACK);
+	hr_white_layer = bitmap_layer_create(GRect(0, 0, 180, 180));
+	hr_black_layer = bitmap_layer_create(GRect(0, 0, 180, 180));
+	bitmap_layer_set_compositing_mode(hr_white_layer, GCompOpSet);
+	bitmap_layer_set_compositing_mode(hr_black_layer, GCompOpSet);
+	bitmap_layer_set_bitmap(hr_black_layer, hr_bitmap_b);
+	bitmap_layer_set_bitmap(hr_white_layer, hr_bitmap_w);
+	layer_add_child(window_get_root_layer(s_window), bitmap_layer_get_layer(hr_white_layer));
+	layer_add_child(window_get_root_layer(s_window), bitmap_layer_get_layer(hr_black_layer));
+
 	s_num_buffer[0] = '\0';
 
 	// init hand paths
@@ -358,15 +404,19 @@ static void init() {
 
 static void deinit() {
 	#ifdef PBL_HEALTH
-	    if (s_health_event_handle != NULL) {
-	        events_health_service_events_unsubscribe(s_health_event_handle);
-	        s_health_event_handle = NULL;
-	    }
+		if (s_health_event_handle != NULL) {
+			events_health_service_events_unsubscribe(s_health_event_handle);
+			s_health_event_handle = NULL;
+		}
 	#endif
 
 	fpath_destroy(g_minute);
 	fpath_destroy(g_hour);
 	fpath_destroy(g_utc);
+	gbitmap_destroy(hr_bitmap_w);
+	gbitmap_destroy(hr_bitmap_b);
+	bitmap_layer_destroy(hr_white_layer);
+	bitmap_layer_destroy(hr_black_layer);
 
 	tick_timer_service_unsubscribe();
 	window_destroy(s_window);
