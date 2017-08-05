@@ -38,7 +38,8 @@
 				"defaultValue": false,
 				"description": "Shows the 24h time scale around the outside of the face."
 			}
-		]
+		],
+		"capabilities": ["PLATFORM_CHALK"]
 	},
 	{
 		"type": "section",

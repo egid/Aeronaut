@@ -58,7 +58,7 @@ static void settings_handler(void *context) {
 	s_use_sleep = enamel_get_SLEEP_MODE_ENABLED();
 	s_dark_theme = enamel_get_DARK_THEME();
 
-	s_show_hour_digits = enamel_get_SHOW_HOUR_DIGITS();
+	s_show_hour_digits = PBL_IF_ROUND_ELSE(enamel_get_SHOW_HOUR_DIGITS(),false);
 
 	window_set_background_color(s_window, g_palette[FACE_COLOR]);
 	text_layer_set_text_color(s_num_label, g_palette[COMPLICATION_COLOR]);
@@ -201,7 +201,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	// angles
 	int32_t gmt_angle = (TRIG_MAX_ANGLE * (((gmt->tm_hour + enamel_get_OFFSET_GMT_HAND()) * 6) + (gmt->tm_min / 10))) / (24 * 6);
 	int32_t second_angle = TRIG_MAX_ANGLE * t->tm_sec / 60;
-	int32_t minute_angle = TRIG_MAX_ANGLE * t->tm_min / 60;
+	int32_t minute_angle = TRIG_MAX_ANGLE * (t->tm_min * 60 + t->tm_sec) / 3600;
 	int32_t hour_angle = (TRIG_MAX_ANGLE * (((t->tm_hour % 12) * 6) + (t->tm_min / 10))) / (12 * 6);
 
 	// init fctx
